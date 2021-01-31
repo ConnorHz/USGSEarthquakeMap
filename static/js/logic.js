@@ -54,7 +54,7 @@ var depthGradient = [
 ]
 
 
-function createMap(earthquakeMarkers) {
+function createMap(earthquakeMarkers, tectonicPlates) {
 
     var darkLayer = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
     attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> © <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> <strong><a href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a></strong>",
@@ -78,13 +78,14 @@ function createMap(earthquakeMarkers) {
     }
 
     var overlayMaps = {
-        Earthquakes: earthquakeMarkers
+        Earthquakes: earthquakeMarkers,
+        "Tectonic Plates": tectonicPlates
     };
 
     var myMap = L.map("map", {
         center: [39.38, -113.78],
         zoom: 5,
-        layers: [satelliteLayer, earthquakeMarkers]
+        layers: [satelliteLayer, earthquakeMarkers, tectonicPlates]
     });
 
     L.control.layers(layers, overlayMaps).addTo(myMap);
@@ -96,12 +97,12 @@ function createMap(earthquakeMarkers) {
         var labels = [];
 
         // Add min & max
-        var legendInfo = "<h1>Earthquake Depth (km)</h1>";
+        var legendInfo = "<h3>Earthquake Depth (km)</h3>";
 
         div.innerHTML = legendInfo;
 
         depthGradient.forEach(function(x, index) {
-            labels.push(`<li style="background-color: ${x.color}"></li>`);
+            labels.push(`<li style="background-color: ${x.color}">${x.label}</li>`);
         });
 
         div.innerHTML += "<ul>" + labels.join("") + "</ul>";
@@ -127,11 +128,19 @@ d3.json(url, data => {
                         fillColor: circleColor,
                         fillOpacity: 0.75,
                         radius: feature.properties.mag * 30000
-                    }).bindPopup(`<h3>${feature.properties.place}</h3><hr><p>${new Date(feature.properties.time)}</p>`)
+                    }).bindPopup(`<h3>${feature.properties.place}</h3><hr><p>${new Date(feature.properties.time)}</p>`, {width: 100, className: 'myCSSClass'})
     });
 
+
+    d3.json("https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_boundaries.json", plateData => {
+        console.log(plateData);
+
+        var tectonicPlates = L.geoJSON(plateData);
+
+        createMap(L.layerGroup(earthquakeMarkers), tectonicPlates);
+    });
     
-    createMap(L.layerGroup(earthquakeMarkers));
+    
 });
 
 
